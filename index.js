@@ -12,7 +12,7 @@ const port = process.env.PORT || 5000;
 //CORS CONFIG FILE
 const corsConfig = {
     origin: [
-        'http://localhost:5173',
+        'http://localhost:5174',
         'lowly-key.surge.sh',
     ],
     credentials: true,
@@ -61,6 +61,7 @@ async function run() {
 
         // VERIFY TOKEN
         const verifyToken = (req, res, next) => {
+
             if (!req.headers.authorization) {
                 return res.status(401).send({ message: 'Unauthorized access. Please try again.' });
             }
@@ -75,7 +76,7 @@ async function run() {
         };
 
         // GET ADMIN AND VERIFY ADMIN ROLL 
-        app.get('/users/admin/:email', async (req, res) => {
+        app.get('/users/admin/:email', verifyToken,  async (req, res) => {
             const email = req.params.email;
             const query = { email: email }
             const find = await apartmentUserCollection.findOne(query)
@@ -87,7 +88,7 @@ async function run() {
         })
 
         // GET ADMIN AND VERIFY ADMIN ROLL 
-        app.get('/users/member/:email', async (req, res) => {
+        app.get('/users/member/:email', verifyToken, async (req, res) => {
             const email = req.params.email;
             const query = { email: email }
             const find = await apartmentUserCollection.findOne(query)
@@ -99,7 +100,7 @@ async function run() {
         })
 
         // STRIPE PAYMENT SYSTEM:
-        app.post('/payment', async (req, res) => {
+        app.post('/payment', verifyToken, async (req, res) => {
             const { price } = req.body;
             const money = parseInt(price * 100)
             const paymentIntent = await stripe.paymentIntents.create({
@@ -113,7 +114,7 @@ async function run() {
         })
 
         // all payments information 
-        app.post('/paymentsInfo', async (req, res) => {
+        app.post('/paymentsInfo', verifyToken, async (req, res) => {
             const data = req.body;
             const result = await paymentReciveed.insertOne(data)
             res.send(result)
@@ -122,7 +123,7 @@ async function run() {
 
         // QUEARY LINK
         // http://localhost:5000/paymentsInfo?month=April&user=taskinahmad@gmail.com
-        app.get('/paymentsInfo', async (req, res) => {
+        app.get('/paymentsInfo', verifyToken, async (req, res) => {
             const user = req.query.user;
             const paymentMonth = req.query.month;
             if (user && paymentMonth) {
@@ -163,6 +164,7 @@ async function run() {
                 res.status(500).json({ message: error.message });
             }
         });
+
         app.get('/apartmentData/:id', async (req, res) => {
             const id = req.params.id;
             const filter = { _id: new ObjectId(id) };
@@ -359,11 +361,13 @@ async function run() {
             const result = await memberAnnouncementCollection.insertOne(data)
             res.send(result);
         })
+
         app.get('/announcement', async (req, res) => {
             const result = await memberAnnouncementCollection.find().toArray();
             res.send(result);
         })
-        app.delete('/announcement/:id', async (req, res) => {
+
+        app.delete('/announcement/:id',  verifyToken, async (req, res) => {
             const id = req.params.id;
             const filter = { _id: new ObjectId(id) }
             const result = await memberAnnouncementCollection.deleteOne(filter);
@@ -379,8 +383,8 @@ run().catch(console.dir);
 
 // SERVER STARTING POINT 
 app.get('/', (req, res) => {
-    res.send('Assignment-12 Server Is Running')
+    res.send('Haven Management Server Is Running')
 })
 app.listen(port, () => {
-    console.log(`Assignment-12 Server Is Sitting On Port ${port}`);
+    console.log(`Haven Management Server Is Sitting On Port ${port}`);
 })
